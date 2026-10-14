@@ -8,7 +8,7 @@ organise spending into categories, set monthly budgets, and read cash-flow
 reports. All data is **synthetic** — the application connects to no real
 financial institution and asks for no real credentials.
 
-[![CI](https://github.com/YOUR_USERNAME/FinSight/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/FinSight/actions/workflows/ci.yml)
+[![CI](https://github.com/bhaveshbokde/finsight-financial-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/bhaveshbokde/finsight-financial-backend/actions/workflows/ci.yml)
 
 ---
 
