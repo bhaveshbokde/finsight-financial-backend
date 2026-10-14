@@ -1,0 +1,16 @@
+date,type,amount,description,merchant,category
+2026-04-01,INCOME,95000.00,Monthly salary,Lentra Technologies,Salary
+2026-04-02,EXPENSE,3480.75,Weekly groceries,Big Bazaar,Groceries
+31/02/2026,EXPENSE,500.00,Invalid date - February has no 31st,Some Shop,Dining
+2026-04-04,TRANSFER,1000.00,Unsupported transaction type,Bank,Groceries
+2026-04-05,EXPENSE,not-a-number,Amount is not numeric,Some Shop,Dining
+2026-04-06,EXPENSE,0.00,Zero amount is rejected,Some Shop,Dining
+2026-04-07,EXPENSE,750.00,,Missing description,Dining
+2026-04-08,EXPENSE,1200.00,Category does not exist,Some Shop,Cryptocurrency
+2026-04-09,INCOME,5000.00,Income filed under an expense category,Client,Groceries
+2026-04-10,EXPENSE,1899.00,This row is valid,Decathlon,Shopping
+2026-04-11,EXPENSE,-2400.00,Negative amount is read as a magnitude,Big Bazaar,Groceries
+2026-04-12,EXPENSE,"1,250.50",Thousands separator is accepted,DMart,Groceries
+12/04/2026,EXPENSE,340.00,European date format is accepted,Cafe Mocha,Dining
+2026-04-14,DEBIT,560.00,DEBIT is an alias for EXPENSE,Local,Transport
+2026-04-15,CREDIT,3000.00,CREDIT is an alias for INCOME,Self,Other Income

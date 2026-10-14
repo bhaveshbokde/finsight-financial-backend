@@ -1,0 +1,144 @@
+# =====================================================================
+#  SECRETS AND CREDENTIALS — never commit
+# =====================================================================
+# Only .env.example is tracked, and it contains placeholders only.
+.env
+.env.*
+!.env.example
+*.env
+env.sh
+secrets.*
+credentials.*
+
+# Private keys, certificates and keystores
+*.pem
+*.key
+*.p8
+*.pkcs12
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+*.crt
+*.cer
+*.der
+id_rsa
+id_ed25519
+*.ppk
+
+# Cloud / service credentials
+.aws/
+.gcloud/
+gcp-*.json
+service-account*.json
+*-credentials.json
+.npmrc
+.netrc
+
+# Environment-specific Spring configuration. The committed application.yml
+# contains no secrets — every sensitive value is a ${ENV_VAR} placeholder.
+src/main/resources/application-local.*
+src/main/resources/application-dev.*
+src/main/resources/application-prod.*
+src/main/resources/application-secret*.*
+src/test/resources/application-local.*
+
+# =====================================================================
+#  DATABASE DUMPS AND PERSONAL DATA
+# =====================================================================
+*.sql.gz
+*.dump
+*.bak
+*.backup
+dump.rdb
+pgdata/
+db-backup*/
+# Generated sample data. The curated samples/transactions-*.csv ARE tracked
+# (synthetic, and referenced by the docs); generated bulk files are not.
+samples/large-import.csv
+samples/generated-*.csv
+
+# =====================================================================
+#  BUILD OUTPUT
+# =====================================================================
+target/
+build/
+out/
+bin/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+*.war
+*.ear
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# =====================================================================
+#  LOGS AND RUNTIME STATE
+# =====================================================================
+*.log
+logs/
+log/
+app.pid
+*.pid
+*.hprof
+hs_err_pid*.log
+replay_pid*.log
+.attach_pid*
+
+# =====================================================================
+#  TEST AND COVERAGE OUTPUT
+# =====================================================================
+.jacoco/
+jacoco.exec
+coverage/
+surefire-reports/
+failsafe-reports/
+allure-results/
+
+# =====================================================================
+#  IDE AND EDITOR
+# =====================================================================
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+.eclipse/
+nbproject/
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# =====================================================================
+#  OS
+# =====================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# =====================================================================
+#  LOCAL INFRASTRUCTURE DATA
+# =====================================================================
+# Redis and Kafka run from ~/.local/opt, outside this tree, but guard anyway.
+.docker-data/
+docker-data/
+kafka-logs/
+redis-data/
+*.rdb
+*.aof

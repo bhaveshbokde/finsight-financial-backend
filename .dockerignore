@@ -1,0 +1,16 @@
+# Keep the build context small and keep secrets out of the image.
+.env
+.env.local
+.git
+.github
+.idea
+*.iml
+target/
+docs/
+samples/
+*.md
+!README.md
+.gitignore
+logs/
+*.log
+.docker-data/

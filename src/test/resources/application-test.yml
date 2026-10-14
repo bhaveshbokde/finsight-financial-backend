@@ -1,0 +1,96 @@
+# Configuration for integration tests (*IT).
+#
+# Points at `finsight_test_db`, which scripts/provision-db.sh creates alongside
+# the application database. Tests must never run against finsight_db — a test
+# that truncates a table would otherwise destroy real development data.
+#
+# In CI the same values come from the workflow's `env:` block, pointing at the
+# PostgreSQL service container.
+
+spring:
+  config:
+    # Reuses the credentials written by scripts/provision-db.sh so tests need no
+    # separate secret. Absent in CI, where real environment variables are set.
+    import: "optional:file:./.env[.properties]"
+
+  datasource:
+    url: ${FINSIGHT_TEST_DB_URL:jdbc:postgresql://127.0.0.1:5432/finsight_test_db}
+    username: ${FINSIGHT_DB_USERNAME:finsight_app}
+    password: ${FINSIGHT_DB_PASSWORD:}
+    hikari:
+      pool-name: finsight-test-pool
+      maximum-pool-size: 5
+      connection-timeout: 5000
+
+  jpa:
+    hibernate:
+      # Still `validate`: the tests must exercise the same Flyway-built schema the
+      # application uses. Letting Hibernate generate the schema here would mean a
+      # green test suite proves nothing about the migrations.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # Enabled only here, so a test run can start from a known-empty schema.
+    # application.yml keeps clean-disabled: true for every other environment.
+    clean-disabled: false
+
+  # Caching off by default so most tests exercise the database path directly and
+  # do not need Redis. RedisCacheIT switches it back on for itself.
+  cache:
+    type: none
+
+  kafka:
+    bootstrap-servers: ${FINSIGHT_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: finsight-test-consumer
+      auto-offset-reset: earliest
+    listener:
+      missing-topics-fatal: false
+
+finsight:
+  jwt:
+    # A fixed, well-known key. This is a test fixture, not a secret: it signs
+    # tokens for an ephemeral database and is intentionally committed so the
+    # suite is reproducible. The real key is generated per machine into .env.
+    secret: dGVzdC1vbmx5LWp3dC1zaWduaW5nLWtleS1maW5zaWdodC1pbnRlZ3JhdGlvbi10ZXN0cy0wMQ==
+    issuer: finsight
+    access-token-ttl: PT30M
+    refresh-token-ttl: P7D
+    clock-skew: PT30S
+
+  csv-import:
+    max-file-size-bytes: 5242880
+    max-rows: 50000
+    # Deliberately high so the default import path in tests is synchronous and
+    # therefore deterministic. KafkaImportIT lowers it to exercise the async path.
+    async-threshold-rows: 10000
+
+  # The poller is off by default: a background thread committing in its own
+  # transaction would race with each test's rollback. OutboxIT drives it directly.
+  outbox:
+    enabled: false
+
+  kafka:
+    consumer-enabled: false
+
+  cache:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.finsight: INFO
+    org.flywaydb: INFO
+    org.springframework.test: WARN
+    # Uncomment when diagnosing a failing query:
+    # org.hibernate.SQL: DEBUG
+    # org.hibernate.orm.jdbc.bind: TRACE

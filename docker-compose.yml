@@ -1,0 +1,154 @@
+# FinSight — local infrastructure
+# -------------------------------
+# Brings up Kafka and Redis only. PostgreSQL deliberately stays on the host,
+# because this machine already runs a configured 16.x instance and replacing it
+# with a container would be an unnecessary, destructive change.
+#
+# On this workstation the Docker socket is not accessible to the current user,
+# so every command below needs sudo:
+#
+#     sudo docker compose up -d
+#     sudo docker compose ps
+#     sudo docker compose logs -f kafka
+#     sudo docker compose down          # stop, keep volumes
+#     sudo docker compose down -v       # stop AND delete all cached data
+#
+# The optional `app` profile additionally runs FinSight itself in a container:
+#
+#     sudo docker compose --profile app up -d --build
+#
+# Note the host.docker.internal mapping in that service: inside a container,
+# `localhost` is the container, not your machine, so the application reaches the
+# host's PostgreSQL through host.docker.internal instead.
+
+name: finsight
+
+services:
+
+  # ---------------------------------------------------------------- Redis --
+  redis:
+    image: redis:7.4-alpine
+    container_name: finsight-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"     # bound to loopback only; not reachable from the LAN
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    # allkeys-lru: this Redis is a pure cache. When it fills up, evicting the
+    # least-recently-used key is correct — every entry is reconstructible from
+    # PostgreSQL. `noeviction` (the default) would start refusing writes instead.
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # ---------------------------------------------------------------- Kafka --
+  # KRaft mode: one process acting as both broker and controller. No ZooKeeper,
+  # which removes a second container and a second failure mode from local dev.
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: finsight-kafka
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9092:9092"
+    environment:
+      CLUSTER_ID: "finsight-local-cluster-01"
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+
+      # Two listeners on purpose:
+      #   INTERNAL (kafka:29092) — how other containers reach the broker
+      #   EXTERNAL (localhost:9092) — how the host reaches it
+      # A client connects once, then reconnects to whatever address the broker
+      # advertises. One listener cannot be correct for both, which is the usual
+      # cause of "connected, then timed out" when running Kafka in Docker.
+      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+
+      # Single broker, so nothing can be replicated. These must be 1 or every
+      # internal topic creation fails.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      # Lists topics through the broker's own admin API — proves the broker is
+      # actually serving requests, which a TCP port check does not.
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ----------------------------------------------------- Kafka UI (optional) --
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: finsight-kafka-ui
+    profiles: ["tools"]           # only with: sudo docker compose --profile tools up -d
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: finsight-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # --------------------------------------------------- FinSight (optional) --
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: finsight:1.0.0
+    container_name: finsight-app
+    profiles: ["app"]             # only with: sudo docker compose --profile app up -d --build
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # host.docker.internal resolves to the host from inside the container.
+      # On Linux this needs the extra_hosts entry below; it is built in on
+      # Docker Desktop for macOS and Windows.
+      FINSIGHT_DB_URL: jdbc:postgresql://host.docker.internal:5432/finsight_db
+      FINSIGHT_DB_USERNAME: ${FINSIGHT_DB_USERNAME:-finsight_app}
+      FINSIGHT_DB_PASSWORD: ${FINSIGHT_DB_PASSWORD:?FINSIGHT_DB_PASSWORD must be set; run scripts/provision-db.sh}
+      FINSIGHT_JWT_SECRET: ${FINSIGHT_JWT_SECRET:?FINSIGHT_JWT_SECRET must be set}
+      FINSIGHT_REDIS_HOST: redis
+      FINSIGHT_REDIS_PORT: 6379
+      FINSIGHT_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/actuator/health/readiness"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+volumes:
+  redis-data:
+  kafka-data:

@@ -1,0 +1,198 @@
+name: CI
+
+# Runs on every push and PR to the main branches.
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+# A new push to the same branch cancels the previous run — no point finishing a
+# build whose commit has already been superseded.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '21'
+
+jobs:
+
+  # ---------------------------------------------------------------- build --
+  # Compile + unit tests only. No infrastructure, so this fails fast on the
+  # errors that are quickest to fix.
+  build:
+    name: Compile and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven           # caches ~/.m2 keyed on pom.xml
+
+      - name: Compile
+        run: mvn -B -ntp clean compile
+
+      - name: Unit tests
+        # Surefire excludes the integration/testcontainers/kafka/redis groups,
+        # so this needs no database, broker or cache.
+        run: mvn -B -ntp test
+
+      - name: Upload unit-test reports
+        if: always()             # reports are most useful exactly when the step failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  # ---------------------------------------------------- integration tests --
+  # Service containers give GitHub's runner a real PostgreSQL, Redis and Kafka.
+  # They are the CI equivalent of `docker compose up` and let the *IT tests run
+  # against genuine services rather than mocks.
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: finsight_app
+          POSTGRES_PASSWORD: finsight_ci_password
+          POSTGRES_DB: finsight_test_db
+        ports:
+          - 5432:5432
+        # Without a health check the job would start running tests before the
+        # database finished initialising and fail intermittently.
+        options: >-
+          --health-cmd "pg_isready -U finsight_app -d finsight_test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Verify PostgreSQL is reachable
+        run: |
+          PGPASSWORD=finsight_ci_password psql -h localhost -U finsight_app -d finsight_test_db \
+            -c "SELECT version();"
+
+      - name: Integration tests (Flyway migrations, repositories, API, security)
+        env:
+          # These are CI-only throwaway credentials for an ephemeral container
+          # that is destroyed when the job ends. They are not secrets and are not
+          # used by any other environment.
+          FINSIGHT_TEST_DB_URL: jdbc:postgresql://localhost:5432/finsight_test_db
+          FINSIGHT_DB_URL: jdbc:postgresql://localhost:5432/finsight_test_db
+          FINSIGHT_DB_USERNAME: finsight_app
+          FINSIGHT_DB_PASSWORD: finsight_ci_password
+          FINSIGHT_JWT_SECRET: Y2ktb25seS1qd3Qtc2lnbmluZy1rZXktZm9yLWVwaGVtZXJhbC10ZXN0LWNvbnRhaW5lcnMtMDE=
+          FINSIGHT_REDIS_HOST: localhost
+          FINSIGHT_REDIS_PORT: 6379
+          # No Kafka service container: Kafka-tagged tests use spring-kafka-test's
+          # embedded broker, which runs in the JVM.
+          FINSIGHT_KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+        run: mvn -B -ntp verify -Pintegration
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          retention-days: 14
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          if [ -f target/site/jacoco/jacoco.csv ]; then
+            echo "### JaCoCo coverage" >> "$GITHUB_STEP_SUMMARY"
+            echo '| Package | Instr. missed | Instr. covered |' >> "$GITHUB_STEP_SUMMARY"
+            echo '|---|---:|---:|' >> "$GITHUB_STEP_SUMMARY"
+            awk -F, 'NR>1 {m[$2]+=$4; c[$2]+=$5} END {for (p in m) printf "| %s | %d | %d |\n", p, m[p], c[p]}' \
+              target/site/jacoco/jacoco.csv >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No JaCoCo report was produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # ------------------------------------------------------------ container --
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false            # nothing is published; this only proves it builds
+          tags: finsight:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ------------------------------------------------------------- security --
+  security:
+    name: Dependency and secret scan
+    runs-on: ubuntu-latest
+    needs: build
+    # Advisory: a newly disclosed CVE in a transitive dependency should surface
+    # in the logs, not block an unrelated pull request.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Dependency tree
+        run: mvn -B -ntp dependency:tree -DoutputFile=dependency-tree.txt
+
+      - name: Check for committed secrets
+        run: |
+          echo "Scanning tracked files for credential-shaped strings..."
+          if git grep -nIE '(password|secret|api[_-]?key)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"'$<{][^"'"'"']{7,}' \
+               -- ':!*.md' ':!.github/workflows/*' ':!.env.example' ':!scripts/*'; then
+            echo "::error::A hard-coded credential may have been committed. Review the matches above."
+            exit 1
+          fi
+          echo "No hard-coded credentials found."
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-tree
+          path: dependency-tree.txt
+          retention-days: 7
