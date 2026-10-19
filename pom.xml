@@ -317,7 +317,7 @@
 
     <profiles>
         <!--
-            mvn verify -Pintegration
+            ./mvnw verify -Pintegration
             Runs *IT tests against the local PostgreSQL instance
             (finsight_test_db, provisioned by scripts/provision-db.sh).
         -->
@@ -340,7 +340,7 @@
         </profile>
 
         <!--
-            mvn verify -Pcontainers
+            ./mvnw verify -Pcontainers
             Adds the Testcontainers-backed tests. Requires a Docker daemon the
             JVM can reach (DOCKER_HOST / membership of the docker group).
         -->

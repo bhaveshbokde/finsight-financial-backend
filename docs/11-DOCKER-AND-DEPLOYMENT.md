@@ -8,8 +8,7 @@
 > Redis and Kafka therefore run **in user space** here instead, via
 > `./scripts/local-services.sh` — no Docker, no sudo, nothing outside the home
 > directory. That path *is* verified: all integration tests and the live
-> application run against those services. See
-> [FINAL-DELIVERY-REPORT.md](../FINAL-DELIVERY-REPORT.md) §3.
+> application run against those services.
 
 ---
 
@@ -24,7 +23,7 @@ optional.
 graph TB
     subgraph Host["Host machine"]
         PG[("PostgreSQL 16<br/>127.0.0.1:5432<br/><small>pre-existing</small>")]
-        App["FinSight<br/>:8080<br/><small>mvn spring-boot:run</small>"]
+        App["FinSight<br/>:8080<br/><small>./mvnw spring-boot:run</small>"]
     end
     subgraph Compose["docker compose"]
         R[("Redis 7.4<br/>127.0.0.1:6379")]
@@ -81,10 +80,10 @@ FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
 
 COPY pom.xml .
-RUN mvn -B -q dependency:go-offline
+RUN ./mvnw -B -q dependency:go-offline
 
 COPY src ./src
-RUN mvn -B -q clean package -DskipTests
+RUN ./mvnw -B -q clean package -DskipTests
 RUN java -Djarmode=layertools -jar target/finsight-*.jar extract --destination extracted
 ```
 
@@ -267,8 +266,8 @@ graph LR
     java-version: '21'
     distribution: temurin
     cache: maven        # caches ~/.m2 keyed on pom.xml
-- run: mvn -B -ntp clean compile
-- run: mvn -B -ntp test
+- run: ./mvnw -B -ntp clean compile
+- run: ./mvnw -B -ntp test
 ```
 
 Needs no infrastructure, because surefire excludes the integration groups.

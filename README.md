@@ -54,10 +54,11 @@ Full rationale: [docs/12-DESIGN-DECISIONS-AND-TRADEOFFS.md](docs/12-DESIGN-DECIS
 
 ```bash
 java -version      # 21
-mvn -version       # 3.9+
 psql --version     # 16
 pg_lsclusters      # the server must be online
 ```
+
+Maven is not required: `./mvnw` is bundled and fetches Maven 3.9.11 on first use.
 
 ### 2. Provision the database
 
@@ -155,9 +156,9 @@ sudo docker compose up -d redis kafka     # the socket here is root-owned
 ## Testing
 
 ```bash
-mvn test                      # 179 unit tests. No infrastructure. Always runnable.
-mvn verify -Pintegration      # + 157 integration tests against real services
-mvn verify -Pcontainers       # Testcontainers variants (needs JVM access to Docker)
+./mvnw test                      # 179 unit tests. No infrastructure. Always runnable.
+./mvnw verify -Pintegration      # + 157 integration tests against real services
+./mvnw verify -Pcontainers       # Testcontainers variants (needs JVM access to Docker)
 ```
 
 Currently **179 unit + 157 integration tests pass, zero failures, zero skips** —
@@ -213,8 +214,6 @@ with `dto` alongside. Dependencies point inward and across, never upward.
 | [10-TESTING-AND-DEBUGGING](docs/10-TESTING-AND-DEBUGGING.md) | Test strategy, IntelliJ debugging |
 | [11-DOCKER-AND-DEPLOYMENT](docs/11-DOCKER-AND-DEPLOYMENT.md) | Images, Compose, CI |
 | [12-DESIGN-DECISIONS-AND-TRADEOFFS](docs/12-DESIGN-DECISIONS-AND-TRADEOFFS.md) | Why, and what was given up |
-| [13-INTERVIEW-PREPARATION](docs/13-INTERVIEW-PREPARATION.md) | Questions tied to this code |
-| [14-LEARNING-ROADMAP](docs/14-LEARNING-ROADMAP.md) | A study order |
 | [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) | Failures and fixes |
 
 ---
@@ -238,7 +237,7 @@ that does less honestly.
   no claim is made that they have been observed working.
 - **The Docker image has never been built here** (the daemon is not reachable
   from this user). CI builds it on every push. Redis and Kafka run in user space
-  instead — see [NEXT-STEPS.md](NEXT-STEPS.md).
+  instead — see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 - **Single-node assumptions in the local Compose file** (replication factor 1).
   Not production settings, and labelled as such.
 - A source-level security review is not a penetration test.

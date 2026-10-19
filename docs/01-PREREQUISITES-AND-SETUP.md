@@ -4,7 +4,7 @@
 
 ```bash
 java -version          # expect 21.x
-mvn -version           # expect 3.9+, running on Java 21
+./mvnw -version           # expect 3.9+, running on Java 21
 psql --version         # expect 16.x
 pg_lsclusters          # the cluster must say "online"
 ```
@@ -36,7 +36,7 @@ docker --version && docker compose version
 |---|---|
 | Role `finsight_app` | `LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION` |
 | Database `finsight_db` | owner `finsight_app`, UTF-8, `template0` |
-| Database `finsight_test_db` | owner `finsight_app`, used only by `mvn verify -Pintegration` |
+| Database `finsight_test_db` | owner `finsight_app`, used only by `./mvnw verify -Pintegration` |
 
 On each database it then runs:
 
@@ -276,7 +276,7 @@ PostgreSQL to accept connections from the Docker bridge — see
 
 1. **File → Open**, select the `FinSight` directory (the one with `pom.xml`).
    Choose *Open as Project*. IntelliJ imports the Maven model itself — do not
-   run `mvn idea:idea`.
+   run `./mvnw idea:idea`.
 2. **File → Project Structure → Project** → SDK 21, language level 21.
 3. **Settings → Build → Build Tools → Maven → Runner** → tick
    *Delegate IDE build/run actions to Maven* so IDE and CLI builds agree.

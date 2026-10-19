@@ -8,9 +8,9 @@ must be able to run *everything*.
 
 ```mermaid
 graph TB
-    A["Unit tests<br/><small>mvn test · no infrastructure · seconds</small>"]
-    B["Integration tests<br/><small>mvn verify -Pintegration · real PostgreSQL</small>"]
-    C["Container tests<br/><small>mvn verify -Pcontainers · Docker from the JVM</small>"]
+    A["Unit tests<br/><small>./mvnw test · no infrastructure · seconds</small>"]
+    B["Integration tests<br/><small>./mvnw verify -Pintegration · real PostgreSQL</small>"]
+    C["Container tests<br/><small>./mvnw verify -Pcontainers · Docker from the JVM</small>"]
     A --> B --> C
     style A fill:#e8f5e9
     style B fill:#e3f2fd
@@ -19,15 +19,15 @@ graph TB
 
 | Tier | Command | Needs | Covers |
 |---|---|---|---|
-| Unit | `mvn test` | nothing | Money arithmetic, hashing, date rules, JWT, CSV parsing, service decisions |
-| Integration | `mvn verify -Pintegration` | PostgreSQL + `finsight_test_db` | Migrations, real constraints, full HTTP stack, security, data isolation |
-| Container | `mvn verify -Pcontainers` | Docker reachable from the JVM | Testcontainers-backed variants |
+| Unit | `./mvnw test` | nothing | Money arithmetic, hashing, date rules, JWT, CSV parsing, service decisions |
+| Integration | `./mvnw verify -Pintegration` | PostgreSQL + `finsight_test_db` | Migrations, real constraints, full HTTP stack, security, data isolation |
+| Container | `./mvnw verify -Pcontainers` | Docker reachable from the JVM | Testcontainers-backed variants |
 
 ```bash
-mvn test                         # always runnable
-mvn verify -Pintegration         # after scripts/provision-db.sh
-mvn verify -Pintegration -Dtest=CsvImportIT
-mvn verify -Pintegration -Dit.test=UserDataIsolationIT#cannotReadForeignTransaction
+./mvnw test                         # always runnable
+./mvnw verify -Pintegration         # after scripts/provision-db.sh
+./mvnw verify -Pintegration -Dtest=CsvImportIT
+./mvnw verify -Pintegration -Dit.test=UserDataIsolationIT#cannotReadForeignTransaction
 ```
 
 ### How the separation is enforced
@@ -129,8 +129,6 @@ for the integration tier, and for actually starting the application:
 4. **Every Redis cache *hit* failed** — values stored without type information
    deserialised to a `LinkedHashMap`. Misses worked, so the cache looked healthy.
    Only a test that re-read a key could find it.
-
-Full detail in [FINAL-DELIVERY-REPORT.md](../FINAL-DELIVERY-REPORT.md) §2.
 
 ---
 
@@ -268,7 +266,7 @@ To run them where Docker *is* reachable:
 
 ```bash
 sudo usermod -aG docker "$USER" && newgrp docker   # root-equivalent; understand this first
-mvn verify -Pcontainers
+./mvnw verify -Pcontainers
 ```
 
 ---
@@ -276,7 +274,7 @@ mvn verify -Pcontainers
 ## Coverage
 
 ```bash
-mvn verify -Pintegration
+./mvnw verify -Pintegration
 xdg-open target/site/jacoco/index.html
 ```
 
@@ -407,7 +405,7 @@ pg_lsclusters
 `.env` is missing, or Maven was run from a different directory.
 
 ```bash
-cd /path/to/FinSight && mvn verify -Pintegration
+cd /path/to/FinSight && ./mvnw verify -Pintegration
 ```
 
 ### `Schema-validation: wrong column type encountered`

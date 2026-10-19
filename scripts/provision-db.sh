@@ -183,5 +183,5 @@ IS_SUPER="$(echo "SELECT rolsuper FROM pg_roles WHERE rolname='$APP_ROLE';" | ps
                          || warn "'$APP_ROLE' reports rolsuper=$IS_SUPER — review manually."
 
 echo
-echo "Done. Next:  mvn -q clean verify   then   ./scripts/run-local.sh"
+echo "Done. Next:  ./mvnw -q clean verify   then   ./scripts/run-local.sh"
 echo

@@ -537,7 +537,7 @@ sudo bash scripts/provision-db.sh      # creates both databases
 Expected without the profile:
 
 ```bash
-mvn verify -Pintegration
+./mvnw verify -Pintegration
 ```
 
 ---
@@ -579,13 +579,13 @@ Usually the `Authorization` header was not set.
 Drop `-o`:
 
 ```bash
-mvn -B compile
+./mvnw -B compile
 ```
 
 ### `release version 21 not supported`
 
 ```bash
-mvn -version                       # check the Java it reports
+./mvnw -version                       # check the Java it reports
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ```
 
@@ -670,7 +670,7 @@ server-side.
 ### Turning up logging temporarily
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.arguments=\
+./mvnw spring-boot:run -Dspring-boot.run.arguments=\
 "--logging.level.com.finsight=DEBUG \
 --logging.level.org.hibernate.SQL=DEBUG \
 --logging.level.org.hibernate.orm.jdbc.bind=TRACE"

@@ -37,13 +37,6 @@ Depending on why you are here.
    [09](09-REDIS-AND-CACHING.md) — the three subsystems with real complexity
 6. [12-DESIGN-DECISIONS-AND-TRADEOFFS](12-DESIGN-DECISIONS-AND-TRADEOFFS.md) — the why
 
-### "I am preparing for an interview"
-
-1. [14-LEARNING-ROADMAP](14-LEARNING-ROADMAP.md) — a study order with checkpoints
-2. [13-INTERVIEW-PREPARATION](13-INTERVIEW-PREPARATION.md) — questions tied to this code
-3. Then the subsystem documents above, because the answers only hold up if you
-   can point at the file
-
 ## The five things worth knowing first
 
 **1. Money is `BigDecimal`, and `amount` is always positive.**
@@ -83,9 +76,12 @@ user's entries can be evicted without clearing everyone's.
 
 ## A note on honesty
 
-Several things in this project are designed and coded but were not executed end
-to end on the machine it was built on — notably the Kafka consumer path, because
-that workstation's Docker daemon is not reachable from the JVM.
-[FINAL-DELIVERY-REPORT.md](../FINAL-DELIVERY-REPORT.md) lists exactly which checks
-ran, which were skipped, and what their output was. Nothing in these documents
-describes behaviour that does not exist in the code.
+A few things in this project are designed and coded but have never been executed
+end to end here — notably retry backoff and dead-letter routing, because no test
+forces a consumer failure, and the Docker image, because this workstation's
+Docker daemon is not reachable from the JVM. The Kafka produce-and-consume path
+itself *is* exercised against a real broker running in user space.
+Each document states which of its claims were executed and which were not, and
+[10-TESTING-AND-DEBUGGING](10-TESTING-AND-DEBUGGING.md) records what the test
+suite actually covers. Nothing in these documents describes behaviour that does
+not exist in the code.

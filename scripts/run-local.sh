@@ -59,14 +59,14 @@ fi
 # --- Build if needed ---------------------------------------------------------
 if [[ ! -d target/classes ]]; then
   echo "  Building..."
-  mvn -B -q compile
+  ./mvnw -B -q compile
 fi
 ok "Compiled"
 
 echo
 if [[ "${1:-}" == "--bg" ]]; then
   mkdir -p logs
-  nohup mvn -B spring-boot:run > logs/finsight.log 2>&1 &
+  nohup ./mvnw -B spring-boot:run > logs/finsight.log 2>&1 &
   echo $! > app.pid
   ok "Started in the background (pid $(cat app.pid))"
   echo "  logs : tail -f logs/finsight.log"
@@ -76,5 +76,5 @@ else
   echo "  Swagger UI : http://localhost:8080/swagger-ui.html"
   echo "  Health     : http://localhost:8080/actuator/health"
   echo
-  exec mvn -B spring-boot:run
+  exec ./mvnw -B spring-boot:run
 fi

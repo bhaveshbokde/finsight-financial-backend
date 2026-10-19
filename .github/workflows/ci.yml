@@ -36,12 +36,12 @@ jobs:
           cache: maven           # caches ~/.m2 keyed on pom.xml
 
       - name: Compile
-        run: mvn -B -ntp clean compile
+        run: ./mvnw -B -ntp clean compile
 
       - name: Unit tests
         # Surefire excludes the integration/testcontainers/kafka/redis groups,
         # so this needs no database, broker or cache.
-        run: mvn -B -ntp test
+        run: ./mvnw -B -ntp test
 
       - name: Upload unit-test reports
         if: always()             # reports are most useful exactly when the step failed
@@ -117,7 +117,7 @@ jobs:
           # No Kafka service container: Kafka-tagged tests use spring-kafka-test's
           # embedded broker, which runs in the JVM.
           FINSIGHT_KAFKA_BOOTSTRAP_SERVERS: localhost:9092
-        run: mvn -B -ntp verify -Pintegration
+        run: ./mvnw -B -ntp verify -Pintegration
 
       - name: Upload coverage report
         if: always()
@@ -178,7 +178,7 @@ jobs:
           cache: maven
 
       - name: Dependency tree
-        run: mvn -B -ntp dependency:tree -DoutputFile=dependency-tree.txt
+        run: ./mvnw -B -ntp dependency:tree -DoutputFile=dependency-tree.txt
 
       - name: Check for committed secrets
         run: |

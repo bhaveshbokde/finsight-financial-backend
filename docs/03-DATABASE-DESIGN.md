@@ -377,7 +377,7 @@ SELECT user_id, count(*) FROM transactions GROUP BY user_id ORDER BY user_id;
 
 1. Create `V8__add_something.sql`.
 2. Update the matching entity.
-3. `mvn verify -Pintegration` — `FlywayMigrationIT` asserts the version list,
+3. `./mvnw verify -Pintegration` — `FlywayMigrationIT` asserts the version list,
    the indexes, the constraints and the column types.
 4. Update this document.
 

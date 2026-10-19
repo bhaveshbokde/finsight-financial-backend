@@ -92,7 +92,7 @@ SQL
 ok "Schema recreated (empty)"
 
 echo "Re-applying Flyway migrations..."
-mvn -B -q flyway:migrate \
+./mvnw -B -q flyway:migrate \
   -Dflyway.url="$DB_URL" \
   -Dflyway.user="$DB_USER" \
   -Dflyway.locations=filesystem:src/main/resources/db/migration \

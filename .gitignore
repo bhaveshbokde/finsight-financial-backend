@@ -142,3 +142,46 @@ kafka-logs/
 redis-data/
 *.rdb
 *.aof
+
+# =============================================================================
+#  Personal study material — keep local, never publish
+# =============================================================================
+#  These are written for the author's own interview preparation, not for anyone
+#  reading the repository. They stay on disk and out of Git.
+#
+#  Deliberately specific rather than a blanket *.md: README.md, the architecture
+#  and API documentation, setup instructions and the test report are all
+#  legitimate project documentation and must stay published.
+
+INTERVIEW-*.md
+*-INTERVIEW.md
+INTERVIEW_*.md
+docs/*INTERVIEW*.md
+docs/*-INTERVIEW-*.md
+
+STUDY-*.md
+*-STUDY.md
+LEARNING-ROADMAP.md
+STUDY-ROADMAP.md
+docs/*LEARNING-ROADMAP*.md
+docs/*STUDY*.md
+docs/*ROADMAP*.md
+
+PROJECT-WALKTHROUGH.md
+docs/PROJECT-WALKTHROUGH.md
+docs/*WALKTHROUGH*.md
+
+REVISION-*.md
+docs/*REVISION*.md
+NOTES.md
+MY-NOTES.md
+PERSONAL-*.md
+docs/PERSONAL-*.md
+SCRATCH.md
+
+# Personal status reports and operating notes — local paths, dated, written for
+# the author rather than for a reader of the repository.
+FINAL-DELIVERY-REPORT.md
+DELIVERY-REPORT.md
+NEXT-STEPS.md
+HANDOFF.md

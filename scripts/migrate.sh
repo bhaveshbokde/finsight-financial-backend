@@ -44,11 +44,11 @@ echo "FinSight :: Flyway — $LABEL"
 echo "-----------------------------------"
 
 if [[ "$TARGET" == "info" ]]; then
-    mvn -B flyway:info 2>&1 | sed -n '/Schema version/,/^\[INFO\] ---/p;/No migrations found/p'
+    ./mvnw -B flyway:info 2>&1 | sed -n '/Schema version/,/^\[INFO\] ---/p;/No migrations found/p'
     exit 0
 fi
 
-mvn -B flyway:migrate 2>&1 | grep -E 'Migrating|Successfully|up to date|Current version|ERROR' || true
+./mvnw -B flyway:migrate 2>&1 | grep -E 'Migrating|Successfully|up to date|Current version|ERROR' || true
 
 # Verify rather than trust the exit code alone.
 TABLES="$(PGPASSWORD="$FLYWAY_PASSWORD" psql \

@@ -492,11 +492,12 @@ limits and filename sanitisation · error-disclosure control · least-privilege
 database role · cache key isolation · security headers · deny-by-default
 authorization.
 
-### Implemented but not verified in the author's environment
+### Implemented but not verified
 
-Kafka message validation and dead-letter routing — the code and tests exist, but
-no broker was reachable from the JVM on the build machine. See
-[FINAL-DELIVERY-REPORT.md](../FINAL-DELIVERY-REPORT.md).
+Dead-letter routing — the code and configuration exist, but no test forces a
+consumer failure, so no claim is made that the path has been observed working.
+Message validation on the consumer *is* exercised against a real broker; see
+[08-KAFKA-AND-ASYNCHRONOUS-PROCESSING](08-KAFKA-AND-ASYNCHRONOUS-PROCESSING.md).
 
 ### Known gaps
 

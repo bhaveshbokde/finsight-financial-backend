@@ -435,10 +435,10 @@ here.
 
 ### Three tiers by infrastructure need
 
-**Bought:** `mvn test` always runs, in seconds, with no setup. That is what keeps
+**Bought:** `./mvnw test` always runs, in seconds, with no setup. That is what keeps
 tests being run.
 
-**Gave up:** a developer who only runs `mvn test` misses the integration tier.
+**Gave up:** a developer who only runs `./mvnw test` misses the integration tier.
 
 ### Testcontainers declared but excluded
 

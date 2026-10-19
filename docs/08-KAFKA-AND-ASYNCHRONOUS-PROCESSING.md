@@ -6,7 +6,7 @@
 > Both pass. The pipeline was also exercised manually against the running
 > application: a 506-row upload returned 202, the outbox row was published on the
 > first attempt, the consumer applied all 506 rows, and consumer-group lag
-> returned to 0. See [FINAL-DELIVERY-REPORT.md](../FINAL-DELIVERY-REPORT.md) §5.
+> returned to 0.
 >
 > **Still unverified:** retry backoff and dead-letter routing. Those paths are
 > implemented and configured but no test forces a consumer failure, so nothing

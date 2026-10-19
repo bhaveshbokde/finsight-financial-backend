@@ -13,6 +13,9 @@ WORKDIR /build
 # inputs, so dependency resolution is only re-run when pom.xml itself changes —
 # editing a Java file then rebuilds in seconds instead of re-downloading
 # everything. Copying the whole context first would defeat this entirely.
+# The base image already carries Maven 3.9, so the build uses it directly rather
+# than the wrapper: the wrapper would have to be copied in and would then
+# download a second, near-identical distribution on every cold build.
 COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
 
